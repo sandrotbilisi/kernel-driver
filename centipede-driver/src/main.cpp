@@ -161,7 +161,7 @@ NTSTATUS driver_main(PDRIVER_OBJECT driver_object, PUNICODE_STRING registry_path
 	driver_object->MajorFunction[IRP_MJ_CLOSE] = driver::close;
 	driver_object->MajorFunction[IRP_MJ_DEVICE_CONTROL] = driver::device_control;
 
-	ClearFlag(device_object->Flags, DO_BUFFERED_IO);
+	ClearFlag(device_object->Flags, DO_DEVICE_INITIALIZING);
 
 	debug_prinnt("[+] Driver Initialized Succesfully!");
 
