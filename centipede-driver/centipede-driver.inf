@@ -1,0 +1,63 @@
+;
+; centipede-driver.inf
+;
+
+[Version]
+Signature   = "$WINDOWS NT$"
+Class       = System ; TODO: specify appropriate Class
+ClassGuid   = {4d36e97d-e325-11ce-bfc1-08002be10318} ; TODO: specify appropriate ClassGuid
+Provider    = %ManufacturerName%
+CatalogFile = centipede-driver.cat
+DriverVer= 
+
+PnpLockdown = 1
+
+[DestinationDirs]
+DefaultDestDir = 13
+
+[SourceDisksNames]
+1 = %DiskName%,,,""
+
+[SourceDisksFiles]
+centipede-driver.sys = 1,,
+
+;*****************************************
+; Install Section
+;*****************************************
+
+[Manufacturer]
+%ManufacturerName% = Standard,NT$ARCH$.10.0...16299 ; %13% support introduced in build 16299
+
+[Standard.NT$ARCH$.10.0...16299]
+%centipede-driver.DeviceDesc% = centipede-driver_Device, Root\centipede-driver ; TODO: edit hw-id
+
+[centipede-driver_Device.NT]
+CopyFiles = File_Copy
+
+[File_Copy]
+centipede-driver.sys
+
+;-------------- Service installation
+[centipede-driver_Device.NT.Services]
+AddService = centipede-driver,%SPSVCINST_ASSOCSERVICE%, centipede-driver_Service_Inst
+
+; -------------- centipede-driver driver install sections
+[centipede-driver_Service_Inst]
+DisplayName    = %centipede-driver.SVCDESC%
+ServiceType    = 1               ; SERVICE_KERNEL_DRIVER
+StartType      = 3               ; SERVICE_DEMAND_START
+ErrorControl   = 1               ; SERVICE_ERROR_NORMAL
+ServiceBinary  = %13%\centipede-driver.sys
+
+[centipede-driver_Device.NT.Wdf]
+KmdfService = centipede-driver, centipede-driver_wdfsect
+
+[centipede-driver_wdfsect]
+KmdfLibraryVersion = $KMDFVERSION$
+
+[Strings]
+SPSVCINST_ASSOCSERVICE = 0x00000002
+ManufacturerName = "<Your manufacturer name>" ;TODO: Replace with your manufacturer name
+DiskName = "centipede-driver Installation Disk"
+centipede-driver.DeviceDesc = "centipede-driver Device"
+centipede-driver.SVCDESC = "centipede-driver Service"
