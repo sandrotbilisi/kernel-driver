@@ -14,8 +14,8 @@ extern "C" {
 
 void debug_prinnt(PCSTR msg) {
 	KdPrintEx((
-		DPFLTR_IHVDRIVER_ID,
-		DPFLTR_INFO_LEVEL,
+		0,
+		0,
 		"Centipede: %s\n",
 		msg
 	));
