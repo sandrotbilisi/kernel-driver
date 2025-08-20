@@ -1,6 +1,6 @@
 ﻿  Building 'centipede-driver' with toolset 'WindowsKernelModeDriver10.0' and the 'Universal' target platform.
   Stamping C:\Users\Alex\source\repos\centipede\build\km_intermediates\centipede-driver.inf
-  Stamping [Version] section with DriverVer=08/20/2025,16.29.32.400
+  Stamping [Version] section with DriverVer=08/20/2025,18.45.9.779
   main.cpp
   centipede-driver.vcxproj -> C:\Users\Alex\source\repos\centipede\build\centipede-driver.sys
   Done Adding Additional Store
