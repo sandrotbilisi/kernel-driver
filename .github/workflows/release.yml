@@ -18,6 +18,6 @@ jobs:
           files: |
             ./build/centipede-driver.sys
             ./build/um.exe
+            ./build/kdmapper_Release.exe
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          
