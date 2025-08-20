@@ -23,9 +23,9 @@ void debug_prinnt(PCSTR msg) {
 
 namespace driver {
 	namespace codes {
-		constexpr ULONG attach = CTL_CODE(FILE_DEVICE_UNKNOWN, 0X696, METHOD_BUFFERED, FILE_SPECIAL_ACCESS);
-		constexpr ULONG read = CTL_CODE(FILE_DEVICE_UNKNOWN, 0X697, METHOD_BUFFERED, FILE_SPECIAL_ACCESS);
-		constexpr ULONG write = CTL_CODE(FILE_DEVICE_UNKNOWN, 0X698, METHOD_BUFFERED, FILE_SPECIAL_ACCESS);
+		constexpr ULONG attach = CTL_CODE(FILE_DEVICE_UNKNOWN, 0X696, METHOD_BUFFERED, FILE_ANY_ACCESS);
+		constexpr ULONG read = CTL_CODE(FILE_DEVICE_UNKNOWN, 0X697, METHOD_BUFFERED, FILE_ANY_ACCESS);
+		constexpr ULONG write = CTL_CODE(FILE_DEVICE_UNKNOWN, 0X698, METHOD_BUFFERED, FILE_ANY_ACCESS);
 	}
 	struct Request {
 		HANDLE process_id;
@@ -39,17 +39,27 @@ namespace driver {
 	NTSTATUS create(PDEVICE_OBJECT device_object, PIRP irp) {
 		UNREFERENCED_PARAMETER(device_object);
 
+		debug_prinnt("[+] Device opened");
+		
+		irp->IoStatus.Status = STATUS_SUCCESS;
+		irp->IoStatus.Information = 0;
+		
 		IoCompleteRequest(irp, IO_NO_INCREMENT);
 
-		return irp->IoStatus.Status;
+		return STATUS_SUCCESS;
 	}
 
 	NTSTATUS close(PDEVICE_OBJECT device_object, PIRP irp) {
 		UNREFERENCED_PARAMETER(device_object);
 
+		debug_prinnt("[+] Device closed");
+		
+		irp->IoStatus.Status = STATUS_SUCCESS;
+		irp->IoStatus.Information = 0;
+		
 		IoCompleteRequest(irp, IO_NO_INCREMENT);
 
-		return irp->IoStatus.Status;
+		return STATUS_SUCCESS;
 	}
 
 	// Note : Todo
@@ -76,9 +86,21 @@ namespace driver {
 		switch (control_code) {
 
 			case codes::attach:
+				debug_prinnt("[+] Attach request received");
+				// If we already have a process attached, dereference it first
+				if (target_process != nullptr) {
+					ObDereferenceObject(target_process);
+					target_process = nullptr;
+				}
 				status = PsLookupProcessByProcessId(request->process_id, &target_process);
+				if (status == STATUS_SUCCESS) {
+					debug_prinnt("[+] Process attached successfully");
+				} else {
+					debug_prinnt("[-] Failed to attach to process");
+				}
 				break;
 			case codes::read:
+				debug_prinnt("[+] Read request received");
 				if (target_process != nullptr) {
 					status = MmCopyVirtualMemory(
 						target_process,
@@ -89,22 +111,39 @@ namespace driver {
 						KernelMode,
 						&request->return_Size
 					);
+					if (status == STATUS_SUCCESS) {
+						debug_prinnt("[+] Read operation successful");
+					} else {
+						debug_prinnt("[-] Read operation failed");
+					}
+				} else {
+					debug_prinnt("[-] No target process attached");
+					status = STATUS_UNSUCCESSFUL;
 				}
 
 				break;
 
 			case codes::write:
-
-				status = MmCopyVirtualMemory(
-					PsGetCurrentProcess(),
-					request->buffer,
-					target_process,
-					request->target,
-					request->size,
-					KernelMode,
-					&request->return_Size
-				);
-
+				debug_prinnt("[+] Write request received");
+				if (target_process != nullptr) {
+					status = MmCopyVirtualMemory(
+						PsGetCurrentProcess(),
+						request->buffer,
+						target_process,
+						request->target,
+						request->size,
+						KernelMode,
+						&request->return_Size
+					);
+					if (status == STATUS_SUCCESS) {
+						debug_prinnt("[+] Write operation successful");
+					} else {
+						debug_prinnt("[-] Write operation failed");
+					}
+				} else {
+					debug_prinnt("[-] No target process attached");
+					status = STATUS_UNSUCCESSFUL;
+				}
 
 				break;
 
@@ -144,6 +183,9 @@ NTSTATUS driver_main(PDRIVER_OBJECT driver_object, PUNICODE_STRING registry_path
 	UNICODE_STRING symbolic_link = {};
 	RtlInitUnicodeString(&symbolic_link, L"\\DosDevices\\centipede");
 
+	// Delete existing symbolic link if it exists
+	IoDeleteSymbolicLink(&symbolic_link);
+	
 	status = IoCreateSymbolicLink(&symbolic_link, &device_name);
 
 	if (status != STATUS_SUCCESS) {
@@ -163,9 +205,20 @@ NTSTATUS driver_main(PDRIVER_OBJECT driver_object, PUNICODE_STRING registry_path
 
 	ClearFlag(device_object->Flags, DO_DEVICE_INITIALIZING);
 
+	// Set up driver unload routine
+	driver_object->DriverUnload = [](PDRIVER_OBJECT driver_object) {
+		UNICODE_STRING symbolic_link = {};
+		RtlInitUnicodeString(&symbolic_link, L"\\DosDevices\\centipede");
+		IoDeleteSymbolicLink(&symbolic_link);
+		
+		if (driver_object->DeviceObject != nullptr) {
+			IoDeleteDevice(driver_object->DeviceObject);
+		}
+		
+		debug_prinnt("[+] Driver unloaded successfully");
+	};
+
 	debug_prinnt("[+] Driver Initialized Succesfully!");
-
-
 
 	return status;
 }

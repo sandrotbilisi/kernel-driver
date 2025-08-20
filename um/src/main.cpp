@@ -57,9 +57,9 @@ static std::uintptr_t get_module_base(const DWORD pid, const wchar_t* module_nam
 
 namespace driver {
 	namespace codes {
-		constexpr ULONG attach = CTL_CODE(FILE_DEVICE_UNKNOWN, 0X696, METHOD_BUFFERED, FILE_SPECIAL_ACCESS);
-		constexpr ULONG read = CTL_CODE(FILE_DEVICE_UNKNOWN, 0X697, METHOD_BUFFERED, FILE_SPECIAL_ACCESS);
-		constexpr ULONG write = CTL_CODE(FILE_DEVICE_UNKNOWN, 0X698, METHOD_BUFFERED, FILE_SPECIAL_ACCESS);
+		constexpr ULONG attach = CTL_CODE(FILE_DEVICE_UNKNOWN, 0X696, METHOD_BUFFERED, FILE_ANY_ACCESS);
+		constexpr ULONG read = CTL_CODE(FILE_DEVICE_UNKNOWN, 0X697, METHOD_BUFFERED, FILE_ANY_ACCESS);
+		constexpr ULONG write = CTL_CODE(FILE_DEVICE_UNKNOWN, 0X698, METHOD_BUFFERED, FILE_ANY_ACCESS);
 	}
 	struct Request {
 		HANDLE process_id;
@@ -118,10 +118,12 @@ int main() {
 
 	std::cout << "found instance\n";
 
-	const HANDLE driver = CreateFile(L"\\\\.\\centipede", GENERIC_READ, 0, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+	const HANDLE driver = CreateFile(L"\\\\.\\centipede", GENERIC_READ | GENERIC_WRITE, 0, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
 
 	if (driver == INVALID_HANDLE_VALUE) {
-		std::cout << "Failed To Create Driver Handle\n";
+		DWORD error = GetLastError();
+		std::cout << "Failed To Create Driver Handle. Error: " << error << std::endl;
+		std::cout << "Make sure the driver is loaded and running with administrator privileges." << std::endl;
 		std::cin.get();
 		return 1;
 	}
