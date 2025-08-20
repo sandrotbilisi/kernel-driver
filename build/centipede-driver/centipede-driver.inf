@@ -8,7 +8,7 @@ Class       = System ; TODO: specify appropriate Class
 ClassGuid   = {4d36e97d-e325-11ce-bfc1-08002be10318} ; TODO: specify appropriate ClassGuid
 Provider    = %ManufacturerName%
 CatalogFile = centipede-driver.cat
-DriverVer = 08/19/2025,16.38.41.150
+DriverVer = 08/20/2025,15.33.2.46
 
 PnpLockdown = 1
 

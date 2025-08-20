@@ -144,9 +144,6 @@ int main() {
 		std::uintptr_t local_player = driver::read_memory<std::uintptr_t>(driver, player_service + dump::PLocalPlayer);
 		std::cout << "Local Player: " << std::hex << local_player << std::dec << "\n";
 
-		std::uintptr_t player_name = driver::read_memory<std::uintptr_t>(driver, local_player + dump::HName);
-		std::cout << "Player Name: " << std::hex << player_name << std::dec << "\n";
-
 		std::uintptr_t player_health = driver::read_memory<std::uintptr_t>(driver, local_player + dump::HHealth);
 		std::cout << "Player Health: " << std::hex << player_health << std::dec << "\n";
 
